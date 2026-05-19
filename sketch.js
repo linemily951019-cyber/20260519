@@ -385,18 +385,18 @@ function drawGameUI() {
   
   // 只有在等待出拳階段，才繪製提示文字與出拳進度條
   if (gameState === STATE_WAITING) {
-    // 0. 提示文字 (顯示在擷取螢幕的下方)
+    // 0. 提示文字 (動態計算間距避免重疊)
     let instructionTextSize = max(18, width * 0.02);
     fill(255);
     stroke(0);
     strokeWeight(3);
     textSize(instructionTextSize);
-    let textY = height * 0.75 + instructionTextSize;
+    let textY = height * 0.75 + instructionTextSize * 1.5;
     text("請將手伸入畫面", width / 2, textY);
-    text("比出剪刀✌️、石頭✊、布🖐️", width / 2, textY + instructionTextSize * 1.5);
+    text("比出剪刀✌️、石頭✊、布🖐️", width / 2, textY + instructionTextSize * 1.8);
 
-    // 1. 玩家出拳進度條 (增加垂直間距避免重疊)
-    let py = textY + instructionTextSize * 4;
+    // 1. 玩家出拳進度條
+    let py = textY + instructionTextSize * 4.5;
     fill(0, 150);
     noStroke();
     rect(px, py, barWidth, barHeight, 10);
@@ -406,19 +406,20 @@ function drawGameUI() {
     fill(255);
     stroke(0);
     strokeWeight(3);
-    textSize(max(18, width * 0.02));
-    text(`玩家出拳鎖定進度：${Math.floor(playerProgress)}%`, width / 2, py - instructionTextSize);
+    let progressTextSize = max(18, width * 0.02);
+    textSize(progressTextSize);
+    text(`玩家出拳鎖定進度：${Math.floor(playerProgress)}%`, width / 2, py - progressTextSize * 1.2);
     
     // 若正在等待且有抓到手勢，顯示即時預覽
     if (playerChoice) {
       fill(255, 255, 0);
-      text(`當前偵測：${playerChoice}`, width / 2, py + barHeight + instructionTextSize);
+      text(`當前偵測：${playerChoice}`, width / 2, py + barHeight + progressTextSize * 1.5);
     }
   }
 
   // 2. AI 思考進度條 (畫面上方)
   if (gameState === STATE_THINKING) {
-    let apy = height * 0.25 - 50;
+    let apy = height * 0.25 - max(40, height * 0.05);
     fill(0, 150);
     noStroke();
     rect(px, apy, barWidth, barHeight, 10);
@@ -436,28 +437,38 @@ function drawGameUI() {
 
   // 3. 結果顯示框 (畫面中央)
   if (gameState === STATE_RESULT) {
+    let iconSize = max(60, width * 0.05);
+    let roleSize = max(24, width * 0.025);
+    let resultSize = max(32, width * 0.035);
+    
+    // 動態根據字體大小累加外框高度
+    let boxH = iconSize + roleSize + resultSize + 120;
     let boxW = max(550, width * 0.5); // 稍微加寬以容納較長的文字
-    let boxH = 240; // 加高以容納圖示
+    let by = height / 2 - boxH / 2;
+    
     fill(0, 200);
     noStroke();
-    rect(width / 2 - boxW / 2, height / 2 - boxH / 2, boxW, boxH, 20);
+    rect(width / 2 - boxW / 2, by, boxW, boxH, 20);
     
     stroke(0);
     strokeWeight(4);
     
+    let curY = by + iconSize * 1.2;
     // 顯示可愛的表情符號圖示
-    textSize(max(60, width * 0.05));
-    text(`${getIcon(playerChoice)}    VS    ${getIcon(aiChoice)}`, width / 2, height / 2 - 50);
+    textSize(iconSize);
+    text(`${getIcon(playerChoice)}    VS    ${getIcon(aiChoice)}`, width / 2, curY);
 
-    textSize(max(24, width * 0.025));
+    curY += roleSize * 1.8;
+    textSize(roleSize);
     fill(255, 255, 0);
-    text(`玩家：${playerChoice}              AI：${aiChoice}`, width / 2, height / 2 + 10);
+    text(`玩家：${playerChoice}              AI：${aiChoice}`, width / 2, curY);
     
-    textSize(max(32, width * 0.035)); // 稍微縮小字體避免超出邊框
+    curY += resultSize * 1.8;
+    textSize(resultSize); 
     if (gameResult.startsWith("你的")) fill(50, 255, 50);
     else if (gameResult.startsWith("AI的")) fill(255, 50, 50);
     else fill(200, 200, 200);
-    text(gameResult, width / 2, height / 2 + 70);
+    text(gameResult, width / 2, curY);
     
     // --- 繪製彩帶特效 ---
     if (gameResult.startsWith("你的")) {
@@ -470,8 +481,11 @@ function drawGameUI() {
   
   // 5. 詢問是否繼續畫面 (STATE_REPLAY_ASK)
   if (gameState === STATE_REPLAY_ASK) {
-    let boxW = max(600, width * 0.6);
-    let boxH = 350;
+    let titleSize = max(32, width * 0.035);
+    let hintSize = max(16, width * 0.018);
+    let btnH = max(60, height * 0.08);
+    let boxH = titleSize + btnH + hintSize + 120; // 動態計算高度
+    let boxW = max(550, width * 0.5);
     let by = height / 2 - boxH / 2;
     
     fill(0, 150);
@@ -480,13 +494,12 @@ function drawGameUI() {
     
     // 1. 主文字標題
     fill(255);
-    textSize(max(36, width * 0.04));
-    text("要再玩一局嗎？", width / 2, by + 60);
+    textSize(titleSize);
+    text("要再玩一局嗎？", width / 2, by + titleSize * 1.5);
     
     // 3. 兩個視覺化按鈕
     let btnW = boxW * 0.35;
-    let btnH = 60;
-    let btnY = by + 170;
+    let btnY = by + titleSize * 1.5 + 40;
     let continueX = width / 2 - btnW - 20;
     let endX = width / 2 + 20;
     
@@ -528,18 +541,24 @@ function drawGameUI() {
     text("結束", endX + btnW / 2, btnY + btnH / 2 + 2);
     
     // 4. 手勢提示說明
-    textSize(max(16, width * 0.018));
+    textSize(hintSize);
     fill(200);
-    text("比 OK 👌 → 繼續  、  比 🤟 → 結束", width / 2, by + 280);
+    text("比 OK 👌 → 繼續  、  比 🤟 → 結束", width / 2, btnY + btnH + hintSize * 1.5 + 10);
   }
 
   // 6. 遊戲結束畫面 (STATE_GAME_OVER)
   if (gameState === STATE_GAME_OVER) {
     let totalGames = wins + losses + ties;
     let winRate = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) : "0.0";
+    
+    let titleSize = max(40, width * 0.04);
+    let subTitleSize = max(28, width * 0.03);
+    let statSize = max(22, width * 0.022);
+    let btnH = max(60, height * 0.08);
+    let lineHeight = statSize * 1.8;
 
+    let boxH = titleSize + subTitleSize + (lineHeight * 5) + btnH + 150;
     let boxW = max(600, width * 0.6);
-    let boxH = 450;
     let bx = width / 2 - boxW / 2;
     let by = height / 2 - boxH / 2;
 
@@ -548,34 +567,34 @@ function drawGameUI() {
     noStroke();
     rect(bx, by, boxW, boxH, 20);
 
+    let curY = by + titleSize * 1.5;
     // 主標題
     fill(255);
-    textSize(max(40, width * 0.04));
-    text("遊戲結束，感謝遊玩！", width / 2, by + 60);
+    textSize(titleSize);
+    text("遊戲結束，感謝遊玩！", width / 2, curY);
 
     // 結算標題
-    textSize(max(28, width * 0.03));
+    curY += subTitleSize * 2;
+    textSize(subTitleSize);
     fill(255, 255, 0);
-    text("✨ 最終總結算 ✨", width / 2, by + 130);
+    text("✨ 最終總結算 ✨", width / 2, curY);
 
     // 戰績統計
+    curY += statSize * 2;
     textAlign(LEFT, TOP);
-    textSize(max(22, width * 0.022));
+    textSize(statSize);
     fill(255);
-    let statsX = bx + 60;
-    let statsY = by + 190;
-    let lineHeight = max(32, width * 0.03);
-    text(`總局數：${totalGames} 局`, statsX, statsY);
-    text(`🏆 勝場：${wins} 次`, statsX, statsY + lineHeight * 1);
-    text(`❌ 敗場：${losses} 次`, statsX, statsY + lineHeight * 2);
-    text(`🤝 平手：${ties} 次`, statsX, statsY + lineHeight * 3);
-    text(`勝率：${winRate} %`, statsX, statsY + lineHeight * 4);
+    let statsX = bx + boxW * 0.15; // 稍微置中偏左
+    text(`總局數：${totalGames} 局`, statsX, curY);
+    text(`🏆 勝場：${wins} 次`, statsX, curY + lineHeight * 1);
+    text(`❌ 敗場：${losses} 次`, statsX, curY + lineHeight * 2);
+    text(`🤝 平手：${ties} 次`, statsX, curY + lineHeight * 3);
+    text(`勝率：${winRate} %`, statsX, curY + lineHeight * 4);
 
     // 重新開始按鈕
     let btnW = boxW * 0.4;
-    let btnH = 60;
     let btnX = width / 2 - btnW / 2;
-    let btnY = by + boxH - 90;
+    let btnY = by + boxH - btnH - 30;
     strokeWeight(4);
     stroke(100, 255, 100);
     noFill();
@@ -751,12 +770,14 @@ class Confetti {
 // 滑鼠點擊支援 (作為手勢辨識的備用操作)
 function mousePressed() {
   if (gameState === STATE_REPLAY_ASK) {
-    let boxW = max(600, width * 0.6);
-    let boxH = 350;
+    let titleSize = max(32, width * 0.035);
+    let hintSize = max(16, width * 0.018);
+    let btnH = max(60, height * 0.08);
+    let boxH = titleSize + btnH + hintSize + 120;
+    let boxW = max(550, width * 0.5);
     let by = height / 2 - boxH / 2;
     let btnW = boxW * 0.35;
-    let btnH = 60;
-    let btnY = by + 170;
+    let btnY = by + titleSize * 1.5 + 40;
     let continueX = width / 2 - btnW - 20;
     let endX = width / 2 + 20;
     
@@ -767,12 +788,17 @@ function mousePressed() {
       executeAction("end");
     }
   } else if (gameState === STATE_GAME_OVER) {
+    let titleSize = max(40, width * 0.04);
+    let subTitleSize = max(28, width * 0.03);
+    let statSize = max(22, width * 0.022);
+    let btnH = max(60, height * 0.08);
+    let lineHeight = statSize * 1.8;
+    let boxH = titleSize + subTitleSize + (lineHeight * 5) + btnH + 150;
     let boxW = max(600, width * 0.6);
-    let boxH = 450;
+    let by = height / 2 - boxH / 2;
     let btnW = boxW * 0.4;
-    let btnH = 60;
     let btnX = width / 2 - btnW / 2;
-    let btnY = height / 2 - boxH / 2 + boxH - 90;
+    let btnY = by + boxH - btnH - 30;
 
     // 判斷點擊「重新開始」
     if (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH) {
