@@ -56,6 +56,10 @@ function setup() {
 
   // 初始化生成內建的春日像素風背景
   generatedPixelBg = createPixelArtBackground();
+
+  // 修改點：全域設定清晰的像素感等寬字體，並強制加粗提升數位顆粒感
+  textFont("Courier New, Lucida Console, monospace");
+  textStyle(BOLD);
 }
 
 // 模型載入完成的 Callback 函數
@@ -335,7 +339,6 @@ function detectActionGesture(hand) {
   let isThumbExt = dist(wrist.x, wrist.y, thumbTip.x, thumbTip.y) > dist(wrist.x, wrist.y, thumbMcp.x, thumbMcp.y) * 1.2;
   let isIndexExt = dist(wrist.x, wrist.y, indexTip.x, indexTip.y) > dist(wrist.x, wrist.y, indexMcp.x, indexMcp.y) * 1.3;
   let isMiddleExt = dist(wrist.x, wrist.y, middleTip.x, middleTip.y) > dist(wrist.x, wrist.y, middleMcp.x, middleMcp.y) * 1.3;
-  // 修改點：修正原本錯亂重複的數學公式，讓無名指可以被精準偵測
   let isRingExt = dist(wrist.x, wrist.y, ringTip.x, ringTip.y) > dist(wrist.x, wrist.y, ringMcp.x, ringMcp.y) * 1.3;
   let isPinkyExt = dist(wrist.x, wrist.y, pinkyTip.x, pinkyTip.y) > dist(wrist.x, wrist.y, pinkyMcp.x, pinkyMcp.y) * 1.3;
 
@@ -400,7 +403,7 @@ function drawGameUI() {
     let instructionTextSize = max(15, width * 0.015); 
     fill(255);
     stroke(0);
-    strokeWeight(3);
+    strokeWeight(3); // 清晰的黑邊描邊
     textSize(instructionTextSize);
     
     // 擷取畫面下邊界的 Y 軸座標位置
@@ -429,6 +432,8 @@ function drawGameUI() {
     // 若正在等待且有抓到手勢，顯示即時預覽
     if (playerChoice) {
       fill(255, 255, 0);
+      stroke(0);
+      strokeWeight(3);
       text(`當前偵測：${playerChoice}`, width / 2, py + barHeight + progressTextSize * 1.3);
     }
   }
@@ -508,6 +513,8 @@ function drawGameUI() {
     rect(bx, by, boxW, boxH, 0); 
     
     fill(255);
+    stroke(0);
+    strokeWeight(3);
     textSize(titleSize);
     text("要再玩一局嗎？", width / 2, by + boxH * 0.25);
     
@@ -530,6 +537,8 @@ function drawGameUI() {
     
     noStroke();
     fill(255);
+    stroke(0);
+    strokeWeight(3);
     textSize(max(20, width * 0.02));
     text("繼續", continueX + btnW / 2, btnY + btnH / 2 + 2);
     
@@ -547,10 +556,14 @@ function drawGameUI() {
     
     noStroke();
     fill(255);
+    stroke(0);
+    strokeWeight(3);
     text("結束", endX + btnW / 2, btnY + btnH / 2 + 2);
     
     textSize(hintSize);
     fill(200);
+    stroke(0);
+    strokeWeight(3);
     text("比 OK 👌 → 繼續  、  比 🤟 → 結束", width / 2, btnY + btnH + boxH * 0.12);
   }
 
@@ -576,18 +589,24 @@ function drawGameUI() {
 
     let curY = by + titleSize * 1.5;
     fill(255);
+    stroke(0);
+    strokeWeight(4);
     textSize(titleSize);
     text("遊戲結束，感謝遊玩！", width / 2, curY);
 
     curY += subTitleSize * 2;
     textSize(subTitleSize);
     fill(255, 255, 0);
+    stroke(0);
+    strokeWeight(4);
     text("✨ 最終總結算 ✨", width / 2, curY);
 
     curY += statSize * 2;
     textAlign(CENTER, TOP);
     textSize(statSize);
     fill(255);
+    stroke(0);
+    strokeWeight(3);
     text(`總局數：${totalGames} 局`, width / 2, curY);
     text(`🏆 勝場：${wins} 次`, width / 2, curY + lineHeight * 1);
     text(`❌ 敗場：${losses} 次`, width / 2, curY + lineHeight * 2);
@@ -603,6 +622,8 @@ function drawGameUI() {
     rect(btnX, btnY, btnW, btnH, 15);
     noStroke();
     fill(255);
+    stroke(0);
+    strokeWeight(3);
     textAlign(CENTER, CENTER);
     textSize(max(24, width * 0.025));
     text("重新開始", width / 2, btnY + btnH / 2);
