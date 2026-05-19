@@ -381,22 +381,26 @@ function drawGameUI() {
   let barWidth = width * 0.4;
   let barHeight = 20;
   let px = width / 2 - barWidth / 2;
+  let videoH = height * 0.5;
   
   // 只有在等待出拳階段，才繪製提示文字與出拳進度條
   if (gameState === STATE_WAITING) {
-    // 0. 提示文字 (修改點：降低基礎大小、基準點上移至 0.65 避免超出畫面)
-    let instructionTextSize = max(15, width * 0.016); 
+    // 0. 提示文字 (修改點：基準點精準定位在擷取畫面的下邊界之後，並縮減字體與行距)
+    let instructionTextSize = max(15, width * 0.015); 
     fill(255);
     stroke(0);
     strokeWeight(3);
     textSize(instructionTextSize);
     
-    let textY = height * 0.65 + instructionTextSize * 1.2;
+    // 擷取畫面下邊界的 Y 軸座標位置
+    let videoBottomY = height / 2 + videoH / 2;
+    
+    let textY = videoBottomY + instructionTextSize * 1.5;
     text("請將手伸入畫面", width / 2, textY);
-    text("比出剪刀✌️、石頭✊、布🖐️", width / 2, textY + instructionTextSize * 1.3);
+    text("比出剪刀✌️、石頭✊、布🖐️", width / 2, textY + instructionTextSize * 1.4);
 
-    // 1. 玩家出拳進度條 (修改點：縮小與上面文字的間距)
-    let py = textY + instructionTextSize * 3.0;
+    // 1. 玩家出拳進度條 (緊接在提示文字下方)
+    let py = textY + instructionTextSize * 3.2;
     fill(0, 150);
     noStroke();
     rect(px, py, barWidth, barHeight, 10);
@@ -406,7 +410,7 @@ function drawGameUI() {
     fill(255);
     stroke(0);
     strokeWeight(3);
-    let progressTextSize = max(16, width * 0.016);
+    let progressTextSize = max(15, width * 0.015);
     textSize(progressTextSize);
     text(`玩家出拳鎖定進度：${Math.floor(playerProgress)}%`, width / 2, py - progressTextSize * 1.0);
     
