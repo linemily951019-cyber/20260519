@@ -470,12 +470,21 @@ function drawGameUI() {
     noStroke();
     rect(bx, by, boxW, boxH, 0); 
     
+    // 修改點：幫中出的「VS」加上高清晰白色字體與黑色粗體描邊
+    let curY = by + boxH * 0.25;
+    
+    // 先畫兩側的表情符號
     stroke(0);
     strokeWeight(4);
-    
-    let curY = by + boxH * 0.25;
+    fill(255);
     textSize(iconSize);
-    text(`${getIcon(playerChoice)}    VS    ${getIcon(aiChoice)}`, width / 2, curY);
+    text(`${getIcon(playerChoice)}          ${getIcon(aiChoice)}`, width / 2, curY);
+    
+    // 獨立處理中間的 "VS" 文字顏色與描邊
+    fill(255); // 亮白色，防止與黑背景撞色
+    stroke(0); // 黑色外描邊
+    strokeWeight(4);
+    text("VS", width / 2, curY);
 
     curY += boxH * 0.22;
     textSize(roleSize);
@@ -487,6 +496,8 @@ function drawGameUI() {
     if (gameResult.startsWith("你的")) fill(50, 255, 50);
     else if (gameResult.startsWith("AI的")) fill(255, 50, 50);
     else fill(200, 200, 200);
+    stroke(0);
+    strokeWeight(4);
     text(gameResult, width / 2, curY);
     
     if (gameResult.startsWith("你的")) {
@@ -808,6 +819,7 @@ function mousePressed() {
     let lineHeight = statSize * 1.8;
     let boxH = titleSize + subTitleSize + (lineHeight * 5) + btnH + 150;
     let boxW = max(600, width * 0.6);
+    let bx = width / 2 - boxW / 2;
     let by = height / 2 - boxH / 2;
     let btnW = boxW * 0.4;
     let btnX = width / 2 - btnW / 2;
