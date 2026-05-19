@@ -19,7 +19,7 @@ let aiProgress = 0;       // AI 思考進度 (0-100)
 let actionProgress = 0;   // 詢問介面手勢確認進度 (0-100)
 let playerChoice = "";    // 玩家出拳結果
 let aiChoice = "";        // AI 出拳結果
-let currentAction = "";   // 目前偵測到的動作 ("continue" 或 "end")
+let currentAction = "";   // 目前偵測到的動作 ("continue" 或 "end" 或 "restart")
 let gameResult = "";      // 勝負文字
 let resultTimer = 0;      // 記錄進入結果畫面的時間
 let aiChoices = ["剪刀", "石頭", "布"];
@@ -159,7 +159,7 @@ function draw() {
       // 繪製關節點 (保持紅色)
       fill(255, 0, 0);
       noStroke();
-      for (let i = 0; i < hand.keypoints.length; i++) {
+      for (let i = 0; h < hand.keypoints.length; i++) {
         let kp = hand.keypoints[i];
         let x = map(kp.x, 0, video.width, -videoW / 2, videoW / 2);
         let y = map(kp.y, 0, video.height, -videoH / 2, videoH / 2);
@@ -233,7 +233,7 @@ function draw() {
       }
     }
   } else if (gameState === STATE_RESULT) {
-    // 顯示結果 3 秒後自動進入詢問是否繼續的畫面
+    // 顯示結果 3 秒後自動進入詢詢是否繼續的畫面
     if (millis() - resultTimer > 3000) {
       gameState = STATE_REPLAY_ASK;
       actionProgress = 0;
@@ -262,6 +262,27 @@ function draw() {
       actionProgress = 0;
       currentAction = "";
     }
+  } else if (gameState === STATE_GAME_OVER) {
+    // 修改點：在最終結算畫面監聽手部是否比出「讚 👍」來重置遊戲
+    let detectedAction = null;
+    if (hands && hands.length > 0) {
+      detectedAction = detectActionGesture(hands[0]);
+    }
+
+    if (detectedAction === "restart") {
+      if (currentAction !== "restart") {
+        currentAction = "restart";
+        actionProgress = 0;
+      }
+      // 持續比讚 1.5 秒即可重新開始
+      actionProgress += (deltaTime / 1500) * 100;
+      if (actionProgress >= 100) {
+        resetGame();
+      }
+    } else {
+      actionProgress = 0;
+      currentAction = "";
+    }
   }
 
   // 繪製遊戲 UI
@@ -283,7 +304,7 @@ function drawFallbackBackground() {
   image(generatedPixelBg, -15, -15, width + 30, height + 30);
 }
 
-// --- 判斷玩家手勢邏輯 ---
+// --- 判斷玩家出拳手勢邏輯 ---
 function detectGesture(hand) {
   let wrist = hand.keypoints[0];
   
@@ -320,7 +341,7 @@ function determineWinner() {
   }
 }
 
-// --- 判斷「繼續」或「結束」的手勢邏輯 ---
+// --- 判斷「繼續」、「結束」或「重新開始」的手勢邏輯 ---
 function detectActionGesture(hand) {
   let wrist = hand.keypoints[0];
   // 取得各指尖與指根(MCP)
@@ -341,6 +362,11 @@ function detectActionGesture(hand) {
   let isMiddleExt = dist(wrist.x, wrist.y, middleTip.x, middleTip.y) > dist(wrist.x, wrist.y, middleMcp.x, middleMcp.y) * 1.3;
   let isRingExt = dist(wrist.x, wrist.y, ringTip.x, ringTip.y) > dist(wrist.x, wrist.y, ringMcp.x, ringMcp.y) * 1.3;
   let isPinkyExt = dist(wrist.x, wrist.y, pinkyTip.x, pinkyTip.y) > dist(wrist.x, wrist.y, pinkyMcp.x, pinkyMcp.y) * 1.3;
+
+  // 修改點：新增「比讚 👍」手勢辨識邏輯：大拇指伸直，且其餘四指皆彎曲緊閉
+  if (isThumbExt && !isIndexExt && !isMiddleExt && !isRingExt && !isPinkyExt) {
+    return "restart";
+  }
 
   // 判斷 OK 手勢 👌：大拇指尖和食指尖距離小，且其餘三根手指伸直
   let pinchDist = dist(thumbTip.x, thumbTip.y, indexTip.x, indexTip.y);
@@ -434,7 +460,7 @@ function drawGameUI() {
       fill(255, 255, 0);
       stroke(0);
       strokeWeight(3);
-      text(`當前偵測：${playerChoice}`, width / 2, py + barHeight + progressTextSize * 1.3);
+      text("當前偵測：" + playerChoice, width / 2, py + barHeight + progressTextSize * 1.3);
     }
   }
 
@@ -470,7 +496,6 @@ function drawGameUI() {
     noStroke();
     rect(bx, by, boxW, boxH, 0); 
     
-    // 修改點：幫中出的「VS」加上高清晰白色字體與黑色粗體描邊
     let curY = by + boxH * 0.25;
     
     // 先畫兩側的表情符號
@@ -481,8 +506,8 @@ function drawGameUI() {
     text(`${getIcon(playerChoice)}          ${getIcon(aiChoice)}`, width / 2, curY);
     
     // 獨立處理中間的 "VS" 文字顏色與描邊
-    fill(255); // 亮白色，防止與黑背景撞色
-    stroke(0); // 黑色外描邊
+    fill(255); 
+    stroke(0); 
     strokeWeight(4);
     text("VS", width / 2, curY);
 
@@ -624,13 +649,23 @@ function drawGameUI() {
     text(`🤝 平手：${ties} 次`, width / 2, curY + lineHeight * 3);
     text(`勝率：${winRate} %`, width / 2, curY + lineHeight * 4);
 
+    // 重新開始按鈕
     let btnW = boxW * 0.4;
     let btnX = width / 2 - btnW / 2;
-    let btnY = by + boxH - btnH - 30;
+    let btnY = by + boxH - btnH - 45; // 稍微往上騰出小字空間
     strokeWeight(4);
     stroke(100, 255, 100);
-    noFill();
+    if (currentAction === "restart") fill(100, 255, 100, 80);
+    else noFill();
     rect(btnX, btnY, btnW, btnH, 15);
+    
+    // 修改點：重新開始按鈕內部疊加手勢確認進度條
+    if (currentAction === "restart" && actionProgress > 0) {
+      noStroke();
+      fill(0, 255, 0, 150);
+      rect(btnX, btnY, btnW * (actionProgress / 100), btnH, 15);
+    }
+
     noStroke();
     fill(255);
     stroke(0);
@@ -638,6 +673,11 @@ function drawGameUI() {
     textAlign(CENTER, CENTER);
     textSize(max(24, width * 0.025));
     text("重新開始", width / 2, btnY + btnH / 2);
+    
+    // 修改點：新增比讚手勢重新開始的小提示字
+    textSize(max(14, width * 0.014));
+    fill(200);
+    text("比讚 👍 鎖定重新開始", width / 2, btnY + btnH + 20);
   }
 
   // 4. 在擷取畫面的頂部中央顯示勝敗統計
@@ -819,7 +859,6 @@ function mousePressed() {
     let lineHeight = statSize * 1.8;
     let boxH = titleSize + subTitleSize + (lineHeight * 5) + btnH + 150;
     let boxW = max(600, width * 0.6);
-    let bx = width / 2 - boxW / 2;
     let by = height / 2 - boxH / 2;
     let btnW = boxW * 0.4;
     let btnX = width / 2 - btnW / 2;
