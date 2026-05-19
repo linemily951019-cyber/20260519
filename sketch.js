@@ -120,37 +120,48 @@ function draw() {
 
   // ---------- 繪製手部骨架與節點 ----------
   if (hands && hands.length > 0) {
-    let hand = hands[0];
+    // 改為用迴圈支援多隻手同時偵測與個別顏色區分
+    for (let h = 0; h < hands.length; h++) {
+      let hand = hands[h];
 
-    // 繪製骨架線段
-    stroke(0, 255, 0);
-    let lines = [
-      [0, 1, 2, 3, 4],     // 拇指
-      [5, 6, 7, 8],        // 食指
-      [9, 10, 11, 12],     // 中指
-      [13, 14, 15, 16],    // 無名指
-      [17, 18, 19, 20]     // 小指
-    ];
-    for (let linePoints of lines) {
-      beginShape();
-      noFill();
-      for (let i of linePoints) {
+      // 依據手勢判斷左右手來決定線條顏色 (考慮到畫面有做 scale(-1, 1) 的鏡像翻轉)
+      // 當 ml5 偵測為 "Left" 時，在翻轉畫面上實質為玩家的左手，反之亦然
+      if (hand.handedness === "Left") {
+        stroke(0, 255, 0);   // 左手為綠色
+      } else {
+        stroke(255, 255, 0); // 右手為黃色
+      }
+      
+      strokeWeight(4); // 恢復原本的粗細
+
+      let lines = [
+        [0, 1, 2, 3, 4],     // 拇指
+        [5, 6, 7, 8],        // 食指
+        [9, 10, 11, 12],     // 中指
+        [13, 14, 15, 16],    // 無名指
+        [17, 18, 19, 20]     // 小指
+      ];
+      for (let linePoints of lines) {
+        beginShape();
+        noFill();
+        for (let i of linePoints) {
+          let kp = hand.keypoints[i];
+          let x = map(kp.x, 0, video.width, -videoW / 2, videoW / 2);
+          let y = map(kp.y, 0, video.height, -videoH / 2, videoH / 2);
+          vertex(x, y);
+        }
+        endShape();
+      }
+      
+      // 繪製關節點 (保持紅色)
+      fill(255, 0, 0);
+      noStroke();
+      for (let i = 0; i < hand.keypoints.length; i++) {
         let kp = hand.keypoints[i];
         let x = map(kp.x, 0, video.width, -videoW / 2, videoW / 2);
         let y = map(kp.y, 0, video.height, -videoH / 2, videoH / 2);
-        vertex(x, y);
+        circle(x, y, 8);
       }
-      endShape();
-    }
-    
-    // 繪製關節點
-    fill(255, 0, 0);
-    noStroke();
-    for (let i = 0; i < hand.keypoints.length; i++) {
-      let kp = hand.keypoints[i];
-      let x = map(kp.x, 0, video.width, -videoW / 2, videoW / 2);
-      let y = map(kp.y, 0, video.height, -videoH / 2, videoH / 2);
-      circle(x, y, 8);
     }
   }
   pop();
@@ -385,7 +396,6 @@ function drawGameUI() {
   
   // 只有在等待出拳階段，才繪製提示文字與出拳進度條
   if (gameState === STATE_WAITING) {
-    // 0. 提示文字 (修改點：基準點精準定位在擷取畫面的下邊界之後，並縮減字體與行距)
     let instructionTextSize = max(15, width * 0.015); 
     fill(255);
     stroke(0);
