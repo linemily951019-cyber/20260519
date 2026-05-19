@@ -159,7 +159,6 @@ function draw() {
       // 繪製關節點 (保持紅色)
       fill(255, 0, 0);
       noStroke();
-      // 修改點：修正原本的死迴圈 Bug，將 h 修正為 i，解決畫面卡死卡頓問題
       for (let i = 0; i < hand.keypoints.length; i++) {
         let kp = hand.keypoints[i];
         let x = map(kp.x, 0, video.width, -videoW / 2, videoW / 2);
@@ -649,10 +648,10 @@ function drawGameUI() {
     text(`🤝 平手：${ties} 次`, width / 2, curY + lineHeight * 3);
     text(`勝率：${winRate} %`, width / 2, curY + lineHeight * 4);
 
-    // 重新開始按鈕
+    // 修改點：將按鈕的位置恢復原樣（距離黑色透明底框底部 30 像素）
     let btnW = boxW * 0.4;
     let btnX = width / 2 - btnW / 2;
-    let btnY = by + boxH - btnH - 45; 
+    let btnY = by + boxH - btnH - 30; 
     strokeWeight(4);
     stroke(100, 255, 100);
     if (currentAction === "restart") fill(100, 255, 100, 80);
@@ -674,10 +673,12 @@ function drawGameUI() {
     textSize(max(24, width * 0.025));
     text("重新開始", width / 2, btnY + btnH / 2);
     
-    // 新增比讚手勢重新開始的小提示字
-    textSize(max(14, width * 0.014));
-    fill(200);
-    text("比讚 👍 鎖定重新開始", width / 2, btnY + btnH + 20);
+    // 修改點：將比讚提示字移到黑色透明框的下方（外面）並加強邊框對比度
+    textSize(max(15, width * 0.015));
+    fill(255); 
+    stroke(0);
+    strokeWeight(3);
+    text("比讚 👍 鎖定重新開始", width / 2, by + boxH + 30);
   }
 
   // 4. 在擷取畫面的頂部中央顯示勝敗統計
