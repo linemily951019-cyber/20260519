@@ -57,7 +57,7 @@ function setup() {
   // 初始化生成內建的春日像素風背景
   generatedPixelBg = createPixelArtBackground();
 
-  // 修改點：全域設定清晰的像素感等寬字體，並強制加粗提升數位顆粒感
+  // 全域設定清晰的像素感等寬字體，並強制加粗提升數位顆粒感
   textFont("Courier New, Lucida Console, monospace");
   textStyle(BOLD);
 }
@@ -159,7 +159,8 @@ function draw() {
       // 繪製關節點 (保持紅色)
       fill(255, 0, 0);
       noStroke();
-      for (let i = 0; h < hand.keypoints.length; i++) {
+      // 修改點：修正原本的死迴圈 Bug，將 h 修正為 i，解決畫面卡死卡頓問題
+      for (let i = 0; i < hand.keypoints.length; i++) {
         let kp = hand.keypoints[i];
         let x = map(kp.x, 0, video.width, -videoW / 2, videoW / 2);
         let y = map(kp.y, 0, video.height, -videoH / 2, videoH / 2);
@@ -233,7 +234,7 @@ function draw() {
       }
     }
   } else if (gameState === STATE_RESULT) {
-    // 顯示結果 3 秒後自動進入詢詢是否繼續的畫面
+    // 顯示結果 3 秒後自動進入詢問是否繼續的畫面
     if (millis() - resultTimer > 3000) {
       gameState = STATE_REPLAY_ASK;
       actionProgress = 0;
@@ -263,7 +264,7 @@ function draw() {
       currentAction = "";
     }
   } else if (gameState === STATE_GAME_OVER) {
-    // 修改點：在最終結算畫面監聽手部是否比出「讚 👍」來重置遊戲
+    // 在最終結算畫面監聽手部是否比出「讚 👍」來重置遊戲
     let detectedAction = null;
     if (hands && hands.length > 0) {
       detectedAction = detectActionGesture(hands[0]);
@@ -274,7 +275,6 @@ function draw() {
         currentAction = "restart";
         actionProgress = 0;
       }
-      // 持續比讚 1.5 秒即可重新開始
       actionProgress += (deltaTime / 1500) * 100;
       if (actionProgress >= 100) {
         resetGame();
@@ -363,7 +363,7 @@ function detectActionGesture(hand) {
   let isRingExt = dist(wrist.x, wrist.y, ringTip.x, ringTip.y) > dist(wrist.x, wrist.y, ringMcp.x, ringMcp.y) * 1.3;
   let isPinkyExt = dist(wrist.x, wrist.y, pinkyTip.x, pinkyTip.y) > dist(wrist.x, wrist.y, pinkyMcp.x, pinkyMcp.y) * 1.3;
 
-  // 修改點：新增「比讚 👍」手勢辨識邏輯：大拇指伸直，且其餘四指皆彎曲緊閉
+  // 「比讚 👍」手勢辨識邏輯：大拇指伸直，且其餘四指皆彎曲緊閉
   if (isThumbExt && !isIndexExt && !isMiddleExt && !isRingExt && !isPinkyExt) {
     return "restart";
   }
@@ -505,7 +505,7 @@ function drawGameUI() {
     textSize(iconSize);
     text(`${getIcon(playerChoice)}          ${getIcon(aiChoice)}`, width / 2, curY);
     
-    // 獨立處理中間的 "VS" 文字顏色與描邊
+    // 獨立處理中間的 "VS" 文字顏色與描邊 (修改點：改為亮白高反差，搭黑色描邊)
     fill(255); 
     stroke(0); 
     strokeWeight(4);
@@ -652,14 +652,14 @@ function drawGameUI() {
     // 重新開始按鈕
     let btnW = boxW * 0.4;
     let btnX = width / 2 - btnW / 2;
-    let btnY = by + boxH - btnH - 45; // 稍微往上騰出小字空間
+    let btnY = by + boxH - btnH - 45; 
     strokeWeight(4);
     stroke(100, 255, 100);
     if (currentAction === "restart") fill(100, 255, 100, 80);
     else noFill();
     rect(btnX, btnY, btnW, btnH, 15);
     
-    // 修改點：重新開始按鈕內部疊加手勢確認進度條
+    // 重新開始按鈕內部疊加手勢確認進度條
     if (currentAction === "restart" && actionProgress > 0) {
       noStroke();
       fill(0, 255, 0, 150);
@@ -674,7 +674,7 @@ function drawGameUI() {
     textSize(max(24, width * 0.025));
     text("重新開始", width / 2, btnY + btnH / 2);
     
-    // 修改點：新增比讚手勢重新開始的小提示字
+    // 新增比讚手勢重新開始的小提示字
     textSize(max(14, width * 0.014));
     fill(200);
     text("比讚 👍 鎖定重新開始", width / 2, btnY + btnH + 20);
@@ -859,6 +859,7 @@ function mousePressed() {
     let lineHeight = statSize * 1.8;
     let boxH = titleSize + subTitleSize + (lineHeight * 5) + btnH + 150;
     let boxW = max(600, width * 0.6);
+    let bx = width / 2 - boxW / 2;
     let by = height / 2 - boxH / 2;
     let btnW = boxW * 0.4;
     let btnX = width / 2 - btnW / 2;
