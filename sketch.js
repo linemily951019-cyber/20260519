@@ -303,6 +303,65 @@ function determineWinner() {
   }
 }
 
+// --- 判斷「繼續」或「結束」的手勢邏輯 ---
+function detectActionGesture(hand) {
+  let wrist = hand.keypoints[0];
+  // 取得各指尖與指根(MCP)
+  let thumbTip = hand.keypoints[4];
+  let thumbMcp = hand.keypoints[2];
+  let indexTip = hand.keypoints[8];
+  let indexMcp = hand.keypoints[5];
+  let middleTip = hand.keypoints[12];
+  let middleMcp = hand.keypoints[9];
+  let ringTip = hand.keypoints[16];
+  let ringMcp = hand.keypoints[13];
+  let pinkyTip = hand.keypoints[20];
+  let pinkyMcp = hand.keypoints[17];
+
+  // 判斷各手指是否伸直 (Tip 到 Wrist 的距離大於 MCP 到 Wrist 的距離乘上比例)
+  let isThumbExt = dist(wrist.x, wrist.y, thumbTip.x, thumbTip.y) > dist(wrist.x, wrist.y, thumbMcp.x, thumbMcp.y) * 1.2;
+  let isIndexExt = dist(wrist.x, wrist.y, indexTip.x, indexTip.y) > dist(wrist.x, wrist.y, indexMcp.x, indexMcp.y) * 1.3;
+  let isMiddleExt = dist(wrist.x, wrist.y, middleTip.x, middleTip.y) > dist(wrist.x, wrist.y, middleMcp.x, middleMcp.y) * 1.3;
+  let isRingExt = dist(wrist.x, wrist.y, ringTip.x, ringTip.y) > dist(wrist.x, wrist.y, ringMcp.x, ringMcp.y) * 1.3;
+  let isPinkyExt = dist(wrist.x, wrist.y, pinkyTip.x, pinkyTip.y) > dist(wrist.x, wrist.y, pinkyMcp.x, pinkyMcp.y) * 1.3;
+
+  // 判斷 OK 手勢 👌：大拇指尖和食指尖距離小，且其餘三根手指伸直
+  let pinchDist = dist(thumbTip.x, thumbTip.y, indexTip.x, indexTip.y);
+  let handSize = dist(wrist.x, wrist.y, indexMcp.x, indexMcp.y); // 作為比例尺
+  let isPinching = pinchDist < handSize * 0.8;
+
+  if (isPinching && isMiddleExt && isRingExt && isPinkyExt) {
+    return "continue";
+  }
+
+  // 判斷 I Love You / 搖滾手勢 🤟：大拇指、食指、小指伸直，中指與無名指彎曲
+  if (isThumbExt && isIndexExt && !isMiddleExt && !isRingExt && isPinkyExt) {
+    return "end";
+  }
+
+  return null;
+}
+
+// --- 執行「繼續」或「結束」動作 ---
+function executeAction(action) {
+  if (action === "continue") {
+    // 開啟新的一局（保留戰績）
+    gameState = STATE_WAITING;
+    playerProgress = 0;
+    aiProgress = 0;
+    playerChoice = "";
+    aiChoice = "";
+    gameResult = "";
+    actionProgress = 0;
+    currentAction = "";
+  } else if (action === "end") {
+    // 進入遊戲結束畫面
+    gameState = STATE_GAME_OVER;
+    actionProgress = 0;
+    currentAction = "";
+  }
+}
+
 // --- 取得對應的手勢圖示 ---
 function getIcon(choice) {
   if (choice === "剪刀") return "✌️";
@@ -332,8 +391,8 @@ function drawGameUI() {
     text("請將手伸入畫面", width / 2, textY);
     text("比出剪刀✌️、石頭✊、布🖐️", width / 2, textY + instructionTextSize * 1.5);
 
-    // 1. 玩家出拳進度條 (畫面下方，並根據上方文字的高度自動往下移動)
-    let py = textY + instructionTextSize * 3;
+    // 1. 玩家出拳進度條 (增加垂直間距避免重疊)
+    let py = textY + instructionTextSize * 4;
     fill(0, 150);
     noStroke();
     rect(px, py, barWidth, barHeight, 10);
@@ -344,12 +403,12 @@ function drawGameUI() {
     stroke(0);
     strokeWeight(3);
     textSize(max(18, width * 0.02));
-    text(`玩家出拳鎖定進度：${Math.floor(playerProgress)}%`, width / 2, py - 20);
+    text(`玩家出拳鎖定進度：${Math.floor(playerProgress)}%`, width / 2, py - instructionTextSize);
     
     // 若正在等待且有抓到手勢，顯示即時預覽
     if (playerChoice) {
       fill(255, 255, 0);
-      text(`當前偵測：${playerChoice}`, width / 2, py + 40);
+      text(`當前偵測：${playerChoice}`, width / 2, py + barHeight + instructionTextSize);
     }
   }
 
@@ -419,11 +478,6 @@ function drawGameUI() {
     fill(255);
     textSize(max(36, width * 0.04));
     text("要再玩一局嗎？", width / 2, by + 60);
-    
-    // 2. 遊戲戰績
-    textSize(max(20, width * 0.02));
-    fill(220, 220, 0);
-    text(`🏆 目前戰績：${wins} 勝 / ${losses} 敗 / ${ties} 平手`, width / 2, by + 120);
     
     // 3. 兩個視覺化按鈕
     let btnW = boxW * 0.35;
@@ -540,12 +594,21 @@ function drawGameUI() {
   stroke(0);
   strokeWeight(3);
   
-  fill(50, 255, 50); // 綠色
-  text(`✅ ${wins}勝`, videoRight - 15, videoTop + 15);
-  fill(255, 165, 0); // 橘色
-  text(`🤝 ${ties}平`, videoRight - 15, videoTop + 15 + scoreTextSize * 1.5);
+  let strLoss = `❌ ${losses}敗`;
+  let strTie = `🤝 ${ties}平`;
+  let strWin = `✅ ${wins}勝`;
+
+  // 橫向排列：由右向左計算寬度與繪製，確保對齊不出界
   fill(255, 50, 50);  // 紅色
-  text(`❌ ${losses}敗`, videoRight - 15, videoTop + 15 + scoreTextSize * 3);
+  text(strLoss, videoRight - 15, videoTop + 15);
+  let lossW = textWidth(strLoss);
+  
+  fill(255, 165, 0); // 橘色
+  text(strTie, videoRight - 15 - lossW - 20, videoTop + 15);
+  let tieW = textWidth(strTie);
+  
+  fill(50, 255, 50); // 綠色
+  text(strWin, videoRight - 15 - lossW - tieW - 40, videoTop + 15);
 
   pop();
 }
