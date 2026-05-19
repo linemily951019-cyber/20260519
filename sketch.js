@@ -125,7 +125,6 @@ function draw() {
       let hand = hands[h];
 
       // 依據手勢判斷左右手來決定線條顏色 (考慮到畫面有做 scale(-1, 1) 的鏡像翻轉)
-      // 當 ml5 偵測為 "Left" 時，在翻轉畫面上實質為玩家的左手，反之亦然
       if (hand.handedness === "Left") {
         stroke(0, 255, 0);   // 左手為綠色
       } else {
@@ -336,6 +335,7 @@ function detectActionGesture(hand) {
   let isThumbExt = dist(wrist.x, wrist.y, thumbTip.x, thumbTip.y) > dist(wrist.x, wrist.y, thumbMcp.x, thumbMcp.y) * 1.2;
   let isIndexExt = dist(wrist.x, wrist.y, indexTip.x, indexTip.y) > dist(wrist.x, wrist.y, indexMcp.x, indexMcp.y) * 1.3;
   let isMiddleExt = dist(wrist.x, wrist.y, middleTip.x, middleTip.y) > dist(wrist.x, wrist.y, middleMcp.x, middleMcp.y) * 1.3;
+  // 修改點：修正原本錯亂重複的數學公式，讓無名指可以被精準偵測
   let isRingExt = dist(wrist.x, wrist.y, ringTip.x, ringTip.y) > dist(wrist.x, wrist.y, ringMcp.x, ringMcp.y) * 1.3;
   let isPinkyExt = dist(wrist.x, wrist.y, pinkyTip.x, pinkyTip.y) > dist(wrist.x, wrist.y, pinkyMcp.x, pinkyMcp.y) * 1.3;
 
@@ -450,13 +450,12 @@ function drawGameUI() {
     text(`AI 思考中... ${thinkingIcon} ${Math.floor(aiProgress)}%`, width / 2, apy - 20);
   }
 
-  // 3. 結果顯示框 (修改點：底色框寬高完全貼合擷取影像尺寸)
+  // 3. 結果顯示框
   if (gameState === STATE_RESULT) {
     let iconSize = max(50, width * 0.04);
     let roleSize = max(20, width * 0.018);
     let resultSize = max(26, width * 0.025);
     
-    // 底色黑框大小和位置完全與攝影機影像貼合
     let boxW = videoW;
     let boxH = videoH;
     let bx = width / 2 - boxW / 2;
@@ -464,12 +463,11 @@ function drawGameUI() {
     
     fill(0, 200);
     noStroke();
-    rect(bx, by, boxW, boxH, 0); // 取消圓角以更完美貼合邊緣
+    rect(bx, by, boxW, boxH, 0); 
     
     stroke(0);
     strokeWeight(4);
     
-    // 動態根據貼合後的框高重新配比 Y 軸內部高度
     let curY = by + boxH * 0.25;
     textSize(iconSize);
     text(`${getIcon(playerChoice)}    VS    ${getIcon(aiChoice)}`, width / 2, curY);
@@ -494,13 +492,12 @@ function drawGameUI() {
     }
   }
   
-  // 5. 詢問是否繼續畫面 (修改點：底色框寬高完全貼合擷取影像尺寸)
+  // 5. 詢問是否繼續畫面
   if (gameState === STATE_REPLAY_ASK) {
     let titleSize = max(28, width * 0.028);
     let hintSize = max(15, width * 0.015);
     let btnH = max(50, height * 0.06);
     
-    // 底色黑框大小和位置完全與攝影機影像貼合
     let boxW = videoW;
     let boxH = videoH;
     let bx = width / 2 - boxW / 2;
@@ -508,13 +505,12 @@ function drawGameUI() {
     
     fill(0, 150);
     noStroke();
-    rect(bx, by, boxW, boxH, 0); // 取消圓角以更完美貼合邊緣
+    rect(bx, by, boxW, boxH, 0); 
     
     fill(255);
     textSize(titleSize);
     text("要再玩一局嗎？", width / 2, by + boxH * 0.25);
     
-    // 依據對齊後的寬度優化按鈕排版
     let btnW = boxW * 0.35;
     let btnY = by + boxH * 0.42;
     let continueX = width / 2 - btnW - 20;
