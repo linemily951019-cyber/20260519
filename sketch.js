@@ -124,7 +124,7 @@ function draw() {
 
     // 繪製骨架線段
     stroke(0, 255, 0);
-    strokeWeight(4);
+    // 修正：補上遺漏的擴展運算子或迴圈處理線段
     let lines = [
       [0, 1, 2, 3, 4],     // 拇指
       [5, 6, 7, 8],        // 食指
@@ -169,7 +169,7 @@ function draw() {
   push();
   fill(255); // 白色字體
   stroke(0); // 黑色邊框，確保在任何背景下都能看清楚
-  strokeWeight(4);
+  strongWeight(4);
   textSize(max(16, width * 0.02)); // 根據螢幕寬度自動調整字體大小，最小 16px
   textAlign(CENTER, CENTER); // 將對齊點改為正中央
   // 將文字畫在畫面正中間
@@ -606,51 +606,51 @@ function drawGameUI() {
     text("重新開始", width / 2, btnY + btnH / 2);
   }
 
-  // 4. 在擷取畫面的頂部中央顯示勝敗統計
-  // 擷取畫面上邊界為 height * 0.25
-  let videoTop = height * 0.25;
-  let scoreTextSize = max(18, width * 0.015);
-  
-  textSize(scoreTextSize);
-  stroke(0);
-  strokeWeight(3);
-  
-  let strLoss = `❌ ${losses}敗`;
-  let strTie = `🤝 ${ties}平`;
-  let strWin = `✅ ${wins}勝`;
+  // 4. 在擷取畫面的頂部中央顯示勝敗統計 (修改點：加入條件判斷，當狀態是 GAME_OVER 時不顯示)
+  if (gameState !== STATE_GAME_OVER) {
+    let videoTop = height * 0.25;
+    let scoreTextSize = max(18, width * 0.015);
+    
+    textSize(scoreTextSize);
+    stroke(0);
+    strokeWeight(3);
+    
+    let strLoss = `❌ ${losses}敗`;
+    let strTie = `🤝 ${ties}平`;
+    let strWin = `✅ ${wins}勝`;
 
-  // 橫向排列：計算總寬度後從畫面正中央向外對齊繪製
-  let winW = textWidth(strWin);
-  let tieW = textWidth(strTie);
-  let lossW = textWidth(strLoss);
-  let spacing = 20;
-  let totalW = winW + spacing + tieW + spacing + lossW;
-  let startX = width / 2 - totalW / 2;
+    // 橫向排列：計算總寬度後從畫面正中央向外對齊繪製
+    let winW = textWidth(strWin);
+    let tieW = textWidth(strTie);
+    let lossW = textWidth(strLoss);
+    let spacing = 20;
+    let totalW = winW + spacing + tieW + spacing + lossW;
+    let startX = width / 2 - totalW / 2;
 
-  textAlign(LEFT, TOP);
+    textAlign(LEFT, TOP);
 
-  fill(50, 255, 50); // 綠色
-  text(strWin, startX, videoTop + 15);
-  
-  fill(255, 165, 0); // 橘色
-  text(strTie, startX + winW + spacing, videoTop + 15);
-  
-  fill(255, 50, 50);  // 紅色
-  text(strLoss, startX + winW + spacing + tieW + spacing, videoTop + 15);
+    fill(50, 255, 50); // 綠色
+    text(strWin, startX, videoTop + 15);
+    
+    fill(255, 165, 0); // 橘色
+    text(strTie, startX + winW + spacing, videoTop + 15);
+    
+    fill(255, 50, 50);  // 紅色
+    text(strLoss, startX + winW + spacing + tieW + spacing, videoTop + 15);
+  }
 
   pop();
 }
 
 // 使用低解析度畫布生成真正的像素畫 (Pixel Art)
 function createPixelArtBackground() {
-  // 提高一點點基礎解析度 (寬度 200)，讓細節能夠呈現，同時保留像素感
   let resW = 200;
   let resH = Math.max(Math.floor(200 * (windowHeight / windowWidth)), 120);
   let pg = createGraphics(resW, resH);
-  pg.noSmooth(); // 確保低解析度畫布上的繪圖也是邊緣銳利的像素
+  pg.noSmooth(); 
   pg.noStroke();
 
-  // 天空 (漸層藍色)
+  // 天空
   for (let y = 0; y < resH * 0.5; y++) {
     let inter = map(y, 0, resH * 0.5, 0, 1);
     let c = lerpColor(color(120, 190, 255), color(210, 240, 255), inter);
@@ -663,12 +663,12 @@ function createPixelArtBackground() {
   pg.fill(255, 240, 100);
   pg.circle(resW * 0.85, resH * 0.15, 18);
 
-  // 雲朵 (加上立體陰影)
+  // 雲朵
   drawCloud(pg, resW * 0.2, resH * 0.15, 30);
   drawCloud(pg, resW * 0.6, resH * 0.25, 20);
   drawCloud(pg, resW * 0.8, resH * 0.1, 25);
 
-  // 遠山 (多層次漸層疊加)
+  // 遠山
   pg.fill(130, 190, 160);
   pg.triangle(resW * 0.05, resH * 0.5, resW * 0.35, resH * 0.25, resW * 0.65, resH * 0.5);
   pg.fill(110, 170, 140);
@@ -678,7 +678,7 @@ function createPixelArtBackground() {
   drawSakuraTree(pg, resW * 0.15, resH * 0.45, 18, 30);
   drawSakuraTree(pg, resW * 0.85, resH * 0.48, 24, 35);
 
-  // 草地 (帶漸層過渡)
+  // 草地
   for (let y = Math.floor(resH * 0.5); y <= resH; y++) {
     let inter = map(y, resH * 0.5, resH, 0, 1);
     let c = lerpColor(color(140, 210, 120), color(100, 180, 80), inter);
@@ -691,10 +691,10 @@ function createPixelArtBackground() {
   for (let i = 0; i < 150; i++) {
     let x = random(resW);
     let y = random(resH * 0.5, resH);
-    pg.fill(80, 160, 60, 150); // 草地暗部紋理
+    pg.fill(80, 160, 60, 150); 
     pg.rect(x, y, 1, 2);
     if (random() > 0.7) {
-      pg.fill(random(['#FFB7C5', '#FFF0F5', '#FFFFFF'])); // 櫻花粉白花瓣
+      pg.fill(random(['#FFB7C5', '#FFF0F5', '#FFFFFF'])); 
       pg.rect(x + random(-2, 2), y, random(1, 3), 1);
     }
   }
@@ -702,34 +702,26 @@ function createPixelArtBackground() {
   return pg;
 }
 
-// ---------- 以下為像素圖繪製的輔助函式 ----------
-
-// 繪製雲朵 (帶有立體陰影)
 function drawCloud(pg, cx, cy, w) {
   pg.fill(255);
   pg.circle(cx, cy, w * 0.6);
   pg.circle(cx - w * 0.3, cy + w * 0.1, w * 0.5);
   pg.circle(cx + w * 0.3, cy + w * 0.1, w * 0.5);
-  pg.rect(cx - w * 0.5, cy, w, w * 0.3); // 填補中間空隙
+  pg.rect(cx - w * 0.5, cy, w, w * 0.3); 
   
-  // 陰影
   pg.fill(220, 230, 240);
   pg.rect(cx - w * 0.4, cy + w * 0.2, w * 0.8, w * 0.1);
 }
 
-// 繪製像素風櫻花樹
 function drawSakuraTree(pg, x, y, tw, th) {
-  // 樹幹
   pg.fill(110, 70, 50);
   pg.rect(x - tw * 0.15, y, tw * 0.3, th);
   
-  // 樹冠 (深粉紅底色)
   pg.fill(255, 160, 190);
   pg.circle(x, y, tw * 1.8);
   pg.circle(x - tw * 0.5, y + th * 0.2, tw * 1.5);
   pg.circle(x + tw * 0.5, y + th * 0.2, tw * 1.5);
   
-  // 樹冠 (亮粉紅高光)
   pg.fill(255, 200, 220);
   pg.circle(x, y - tw * 0.2, tw * 1.4);
   pg.circle(x - tw * 0.4, y + th * 0.1, tw * 1.0);
@@ -739,20 +731,20 @@ function drawSakuraTree(pg, x, y, tw, th) {
 class Confetti {
   constructor() {
     this.x = width / 2;
-    this.y = height / 2 + 50; // 發射點位於畫面中央稍微偏下
+    this.y = height / 2 + 50; 
     this.w = random(8, 15);
     this.h = random(8, 15);
-    this.vx = random(-12, 12);  // 隨機的水平擴散速度
-    this.vy = random(-18, -8);  // 隨機的向上噴發速度
-    this.color = color(random(['#ff718d', '#fdff6a', '#a6e5ff', '#71ff98'])); // 隨機亮彩色
+    this.vx = random(-12, 12);  
+    this.vy = random(-18, -8);  
+    this.color = color(random(['#ff718d', '#fdff6a', '#a6e5ff', '#71ff98'])); 
     this.angle = random(TWO_PI);
-    this.spin = random(-0.2, 0.2); // 翻轉速度
+    this.spin = random(-0.2, 0.2); 
   }
   update() {
     this.x += this.vx;
     this.y += this.vy;
-    this.vy += 0.5;     // 重力向下
-    this.vx *= 0.98;    // 空氣阻力
+    this.vy += 0.5;     
+    this.vx *= 0.98;    
     this.angle += this.spin;
   }
   display() {
@@ -767,7 +759,6 @@ class Confetti {
   }
 }
 
-// 滑鼠點擊支援 (作為手勢辨識的備用操作)
 function mousePressed() {
   if (gameState === STATE_REPLAY_ASK) {
     let titleSize = max(32, width * 0.035);
@@ -781,7 +772,6 @@ function mousePressed() {
     let continueX = width / 2 - btnW - 20;
     let endX = width / 2 + 20;
     
-    // 判斷點擊「繼續」與「結束」
     if (mouseX >= continueX && mouseX <= continueX + btnW && mouseY >= btnY && mouseY <= btnY + btnH) {
       executeAction("continue");
     } else if (mouseX >= endX && mouseX <= endX + btnW && mouseY >= btnY && mouseY <= btnY + btnH) {
@@ -800,14 +790,12 @@ function mousePressed() {
     let btnX = width / 2 - btnW / 2;
     let btnY = by + boxH - btnH - 30;
 
-    // 判斷點擊「重新開始」
     if (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH) {
       resetGame();
     }
   }
 }
 
-// --- 重置整個遊戲狀態 ---
 function resetGame() {
   gameState = STATE_WAITING;
   playerProgress = 0;
