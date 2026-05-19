@@ -171,9 +171,9 @@ function draw() {
   stroke(0); // 黑色邊框，確保在任何背景下都能看清楚
   strokeWeight(4);
   textSize(max(16, width * 0.02)); // 根據螢幕寬度自動調整字體大小，最小 16px
-  textAlign(CENTER, TOP); // 將對齊點改為頂部中央
-  // video 的頂部 Y 座標大約為 height * 0.25，將文字畫在影像內部，距離頂部 15px 的位置
-  text(modelStatus, width / 2, height * 0.25 + 15);
+  textAlign(CENTER, CENTER); // 將對齊點改為正中央
+  // 將文字畫在畫面正中間
+  text(modelStatus, width / 2, height / 2);
   pop();
 
   // --- 遊戲邏輯與狀態機 ---
@@ -184,9 +184,13 @@ function draw() {
     }
     
     if (currentGesture) {
+      if (playerChoice !== currentGesture) {
+        // 玩家變換手勢，重置進度並更新當前選擇
+        playerChoice = currentGesture;
+        playerProgress = 0;
+      }
       // 偵測到有效手勢，累積進度條 (約 2 秒滿)
       playerProgress += (deltaTime / 2000) * 100;
-      playerChoice = currentGesture;
       if (playerProgress >= 100) {
         playerProgress = 100;
         gameState = STATE_THINKING; // 進入 AI 思考階段
@@ -470,7 +474,7 @@ function drawGameUI() {
     let boxH = 350;
     let by = height / 2 - boxH / 2;
     
-    fill(0, 220);
+    fill(0, 150);
     noStroke();
     rect(width / 2 - boxW / 2, by, boxW, boxH, 20);
     
@@ -540,7 +544,7 @@ function drawGameUI() {
     let by = height / 2 - boxH / 2;
 
     // 背景框
-    fill(0, 220);
+    fill(0, 150);
     noStroke();
     rect(bx, by, boxW, boxH, 20);
 
@@ -583,13 +587,11 @@ function drawGameUI() {
     text("重新開始", width / 2, btnY + btnH / 2);
   }
 
-  // 4. 在擷取畫面的右上角顯示勝敗統計
-  // 擷取畫面佔畫布的 50% 且置中，因此右邊界為 width * 0.75，上邊界為 height * 0.25
-  let videoRight = width * 0.75;
+  // 4. 在擷取畫面的頂部中央顯示勝敗統計
+  // 擷取畫面上邊界為 height * 0.25
   let videoTop = height * 0.25;
   let scoreTextSize = max(18, width * 0.015);
   
-  textAlign(RIGHT, TOP);
   textSize(scoreTextSize);
   stroke(0);
   strokeWeight(3);
@@ -598,17 +600,24 @@ function drawGameUI() {
   let strTie = `🤝 ${ties}平`;
   let strWin = `✅ ${wins}勝`;
 
-  // 橫向排列：由右向左計算寬度與繪製，確保對齊不出界
-  fill(255, 50, 50);  // 紅色
-  text(strLoss, videoRight - 15, videoTop + 15);
+  // 橫向排列：計算總寬度後從畫面正中央向外對齊繪製
+  let winW = textWidth(strWin);
+  let tieW = textWidth(strTie);
   let lossW = textWidth(strLoss);
+  let spacing = 20;
+  let totalW = winW + spacing + tieW + spacing + lossW;
+  let startX = width / 2 - totalW / 2;
+
+  textAlign(LEFT, TOP);
+
+  fill(50, 255, 50); // 綠色
+  text(strWin, startX, videoTop + 15);
   
   fill(255, 165, 0); // 橘色
-  text(strTie, videoRight - 15 - lossW - 20, videoTop + 15);
-  let tieW = textWidth(strTie);
+  text(strTie, startX + winW + spacing, videoTop + 15);
   
-  fill(50, 255, 50); // 綠色
-  text(strWin, videoRight - 15 - lossW - tieW - 40, videoTop + 15);
+  fill(255, 50, 50);  // 紅色
+  text(strLoss, startX + winW + spacing + tieW + spacing, videoTop + 15);
 
   pop();
 }
