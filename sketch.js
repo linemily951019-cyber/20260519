@@ -336,7 +336,7 @@ function detectActionGesture(hand) {
   let isThumbExt = dist(wrist.x, wrist.y, thumbTip.x, thumbTip.y) > dist(wrist.x, wrist.y, thumbMcp.x, thumbMcp.y) * 1.2;
   let isIndexExt = dist(wrist.x, wrist.y, indexTip.x, indexTip.y) > dist(wrist.x, wrist.y, indexMcp.x, indexMcp.y) * 1.3;
   let isMiddleExt = dist(wrist.x, wrist.y, middleTip.x, middleTip.y) > dist(wrist.x, wrist.y, middleMcp.x, middleMcp.y) * 1.3;
-  let isRingExt = dist(wrist.x, wrist.y, ringTip.x, ringTip.y) > dist(wrist.x, wrist.y, ringMcp.x, ringMcp.y) * 1.3;
+  let isRingExt = dist(wrist.x, wrist.y, ringTip.x, ringTip.y) > dist(wrist.x, width, hand.keypoints[16].x, hand.keypoints[16].y) > dist(wrist.x, wrist.y, ringMcp.x, ringMcp.y) * 1.3;
   let isPinkyExt = dist(wrist.x, wrist.y, pinkyTip.x, pinkyTip.y) > dist(wrist.x, wrist.y, pinkyMcp.x, pinkyMcp.y) * 1.3;
 
   // 判斷 OK 手勢 👌：大拇指尖和食指尖距離小，且其餘三根手指伸直
@@ -396,6 +396,7 @@ function drawGameUI() {
   
   // 只有在等待出拳階段，才繪製提示文字與出拳進度條
   if (gameState === STATE_WAITING) {
+    // 0. 提示文字 (修改點：精準控制文字起點與行高，確保貼近且不越界)
     let instructionTextSize = max(15, width * 0.015); 
     fill(255);
     stroke(0);
@@ -405,12 +406,14 @@ function drawGameUI() {
     // 擷取畫面下邊界的 Y 軸座標位置
     let videoBottomY = height / 2 + videoH / 2;
     
-    let textY = videoBottomY + instructionTextSize * 1.5;
+    // 將第一行往上微調至下邊界下方固定 25 像素，確保不進入影像，同時騰出下方空間
+    let textY = videoBottomY + 25;
     text("請將手伸入畫面", width / 2, textY);
-    text("比出剪刀✌️、石頭✊、布🖐️", width / 2, textY + instructionTextSize * 1.4);
+    // 適度拉開兩行字與進度條的行高
+    text("比出剪刀✌️、石頭✊、布🖐️", width / 2, textY + instructionTextSize * 1.5);
 
-    // 1. 玩家出拳進度條 (緊接在提示文字下方)
-    let py = textY + instructionTextSize * 3.2;
+    // 1. 玩家出拳進度條 (配合文字上移一併優化排版)
+    let py = textY + instructionTextSize * 3.8;
     fill(0, 150);
     noStroke();
     rect(px, py, barWidth, barHeight, 10);
@@ -422,12 +425,12 @@ function drawGameUI() {
     strokeWeight(3);
     let progressTextSize = max(15, width * 0.015);
     textSize(progressTextSize);
-    text(`玩家出拳鎖定進度：${Math.floor(playerProgress)}%`, width / 2, py - progressTextSize * 1.0);
+    text(`玩家出拳鎖定進度：${Math.floor(playerProgress)}%`, width / 2, py - progressTextSize * 1.1);
     
     // 若正在等待且有抓到手勢，顯示即時預覽
     if (playerChoice) {
       fill(255, 255, 0);
-      text(`當前偵測：${playerChoice}`, width / 2, py + barHeight + progressTextSize * 1.2);
+      text(`當前偵測：${playerChoice}`, width / 2, py + barHeight + progressTextSize * 1.3);
     }
   }
 
@@ -579,7 +582,6 @@ function drawGameUI() {
     fill(255, 255, 0);
     text("✨ 最終總結算 ✨", width / 2, curY);
 
-    // 修改點：將對齊設定為居中對齊，X 座標設定在畫布正中央
     curY += statSize * 2;
     textAlign(CENTER, TOP);
     textSize(statSize);
