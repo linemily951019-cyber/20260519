@@ -579,16 +579,16 @@ function drawGameUI() {
     fill(255, 255, 0);
     text("✨ 最終總結算 ✨", width / 2, curY);
 
+    // 修改點：將對齊設定為居中對齊，X 座標設定在畫布正中央
     curY += statSize * 2;
-    textAlign(LEFT, TOP);
+    textAlign(CENTER, TOP);
     textSize(statSize);
     fill(255);
-    let statsX = bx + boxW * 0.15; 
-    text(`總局數：${totalGames} 局`, statsX, curY);
-    text(`🏆 勝場：${wins} 次`, statsX, curY + lineHeight * 1);
-    text(`❌ 敗場：${losses} 次`, statsX, curY + lineHeight * 2);
-    text(`🤝 平手：${ties} 次`, statsX, curY + lineHeight * 3);
-    text(`勝率：${winRate} %`, statsX, curY + lineHeight * 4);
+    text(`總局數：${totalGames} 局`, width / 2, curY);
+    text(`🏆 勝場：${wins} 次`, width / 2, curY + lineHeight * 1);
+    text(`❌ 敗場：${losses} 次`, width / 2, curY + lineHeight * 2);
+    text(`🤝 平手：${ties} 次`, width / 2, curY + lineHeight * 3);
+    text(`勝率：${winRate} %`, width / 2, curY + lineHeight * 4);
 
     let btnW = boxW * 0.4;
     let btnX = width / 2 - btnW / 2;
