@@ -336,7 +336,7 @@ function detectActionGesture(hand) {
   let isThumbExt = dist(wrist.x, wrist.y, thumbTip.x, thumbTip.y) > dist(wrist.x, wrist.y, thumbMcp.x, thumbMcp.y) * 1.2;
   let isIndexExt = dist(wrist.x, wrist.y, indexTip.x, indexTip.y) > dist(wrist.x, wrist.y, indexMcp.x, indexMcp.y) * 1.3;
   let isMiddleExt = dist(wrist.x, wrist.y, middleTip.x, middleTip.y) > dist(wrist.x, wrist.y, middleMcp.x, middleMcp.y) * 1.3;
-  let isRingExt = dist(wrist.x, wrist.y, ringTip.x, ringTip.y) > dist(wrist.x, width, hand.keypoints[16].x, hand.keypoints[16].y) > dist(wrist.x, wrist.y, ringMcp.x, ringMcp.y) * 1.3;
+  let isRingExt = dist(wrist.x, wrist.y, ringTip.x, ringTip.y) > dist(wrist.x, wrist.y, ringMcp.x, ringMcp.y) * 1.3;
   let isPinkyExt = dist(wrist.x, wrist.y, pinkyTip.x, pinkyTip.y) > dist(wrist.x, wrist.y, pinkyMcp.x, pinkyMcp.y) * 1.3;
 
   // 判斷 OK 手勢 👌：大拇指尖和食指尖距離小，且其餘三根手指伸直
@@ -392,11 +392,11 @@ function drawGameUI() {
   let barWidth = width * 0.4;
   let barHeight = 20;
   let px = width / 2 - barWidth / 2;
+  let videoW = width * 0.5;
   let videoH = height * 0.5;
   
   // 只有在等待出拳階段，才繪製提示文字與出拳進度條
   if (gameState === STATE_WAITING) {
-    // 0. 提示文字 (修改點：精準控制文字起點與行高，確保貼近且不越界)
     let instructionTextSize = max(15, width * 0.015); 
     fill(255);
     stroke(0);
@@ -409,7 +409,6 @@ function drawGameUI() {
     // 將第一行往上微調至下邊界下方固定 25 像素，確保不進入影像，同時騰出下方空間
     let textY = videoBottomY + 25;
     text("請將手伸入畫面", width / 2, textY);
-    // 適度拉開兩行字與進度條的行高
     text("比出剪刀✌️、石頭✊、布🖐️", width / 2, textY + instructionTextSize * 1.5);
 
     // 1. 玩家出拳進度條 (配合文字上移一併優化排版)
@@ -451,33 +450,36 @@ function drawGameUI() {
     text(`AI 思考中... ${thinkingIcon} ${Math.floor(aiProgress)}%`, width / 2, apy - 20);
   }
 
-  // 3. 結果顯示框 (畫面中央)
+  // 3. 結果顯示框 (修改點：底色框寬高完全貼合擷取影像尺寸)
   if (gameState === STATE_RESULT) {
-    let iconSize = max(60, width * 0.05);
-    let roleSize = max(24, width * 0.025);
-    let resultSize = max(32, width * 0.035);
+    let iconSize = max(50, width * 0.04);
+    let roleSize = max(20, width * 0.018);
+    let resultSize = max(26, width * 0.025);
     
-    let boxH = iconSize + roleSize + resultSize + 120;
-    let boxW = max(550, width * 0.5); 
+    // 底色黑框大小和位置完全與攝影機影像貼合
+    let boxW = videoW;
+    let boxH = videoH;
+    let bx = width / 2 - boxW / 2;
     let by = height / 2 - boxH / 2;
     
     fill(0, 200);
     noStroke();
-    rect(width / 2 - boxW / 2, by, boxW, boxH, 20);
+    rect(bx, by, boxW, boxH, 0); // 取消圓角以更完美貼合邊緣
     
     stroke(0);
     strokeWeight(4);
     
-    let curY = by + iconSize * 1.2;
+    // 動態根據貼合後的框高重新配比 Y 軸內部高度
+    let curY = by + boxH * 0.25;
     textSize(iconSize);
     text(`${getIcon(playerChoice)}    VS    ${getIcon(aiChoice)}`, width / 2, curY);
 
-    curY += roleSize * 1.8;
+    curY += boxH * 0.22;
     textSize(roleSize);
     fill(255, 255, 0);
     text(`玩家：${playerChoice}              AI：${aiChoice}`, width / 2, curY);
     
-    curY += resultSize * 1.8;
+    curY += boxH * 0.25;
     textSize(resultSize); 
     if (gameResult.startsWith("你的")) fill(50, 255, 50);
     else if (gameResult.startsWith("AI的")) fill(255, 50, 50);
@@ -492,25 +494,29 @@ function drawGameUI() {
     }
   }
   
-  // 5. 詢問是否繼續畫面 (STATE_REPLAY_ASK)
+  // 5. 詢問是否繼續畫面 (修改點：底色框寬高完全貼合擷取影像尺寸)
   if (gameState === STATE_REPLAY_ASK) {
-    let titleSize = max(32, width * 0.035);
-    let hintSize = max(16, width * 0.018);
-    let btnH = max(60, height * 0.08);
-    let boxH = titleSize + btnH + hintSize + 120; 
-    let boxW = max(550, width * 0.5);
+    let titleSize = max(28, width * 0.028);
+    let hintSize = max(15, width * 0.015);
+    let btnH = max(50, height * 0.06);
+    
+    // 底色黑框大小和位置完全與攝影機影像貼合
+    let boxW = videoW;
+    let boxH = videoH;
+    let bx = width / 2 - boxW / 2;
     let by = height / 2 - boxH / 2;
     
     fill(0, 150);
     noStroke();
-    rect(width / 2 - boxW / 2, by, boxW, boxH, 20);
+    rect(bx, by, boxW, boxH, 0); // 取消圓角以更完美貼合邊緣
     
     fill(255);
     textSize(titleSize);
-    text("要再玩一局嗎？", width / 2, by + titleSize * 1.5);
+    text("要再玩一局嗎？", width / 2, by + boxH * 0.25);
     
+    // 依據對齊後的寬度優化按鈕排版
     let btnW = boxW * 0.35;
-    let btnY = by + titleSize * 1.5 + 40;
+    let btnY = by + boxH * 0.42;
     let continueX = width / 2 - btnW - 20;
     let endX = width / 2 + 20;
     
@@ -528,7 +534,7 @@ function drawGameUI() {
     
     noStroke();
     fill(255);
-    textSize(max(24, width * 0.025));
+    textSize(max(20, width * 0.02));
     text("繼續", continueX + btnW / 2, btnY + btnH / 2 + 2);
     
     strokeWeight(4);
@@ -549,7 +555,7 @@ function drawGameUI() {
     
     textSize(hintSize);
     fill(200);
-    text("比 OK 👌 → 繼續  、  比 🤟 → 結束", width / 2, btnY + btnH + hintSize * 1.5 + 10);
+    text("比 OK 👌 → 繼續  、  比 🤟 → 結束", width / 2, btnY + btnH + boxH * 0.12);
   }
 
   // 6. 遊戲結束畫面 (STATE_GAME_OVER)
@@ -670,7 +676,7 @@ function createPixelArtBackground() {
   // 遠山
   pg.fill(130, 190, 160);
   pg.triangle(resW * 0.05, resH * 0.5, resW * 0.35, resH * 0.25, resW * 0.65, resH * 0.5);
-  pg.fill(110, 170, 140);
+  pg.fill(110, 70, 140);
   pg.triangle(resW * 0.35, resH * 0.5, resW * 0.7, resH * 0.2, resW * 1.05, resH * 0.5);
 
   // 像素風櫻花樹
@@ -759,15 +765,16 @@ class Confetti {
 }
 
 function mousePressed() {
+  let videoW = width * 0.5;
+  let videoH = height * 0.5;
+  
   if (gameState === STATE_REPLAY_ASK) {
-    let titleSize = max(32, width * 0.035);
-    let hintSize = max(16, width * 0.018);
-    let btnH = max(60, height * 0.08);
-    let boxH = titleSize + btnH + hintSize + 120;
-    let boxW = max(550, width * 0.5);
+    let boxW = videoW;
+    let boxH = videoH;
     let by = height / 2 - boxH / 2;
     let btnW = boxW * 0.35;
-    let btnY = by + titleSize * 1.5 + 40;
+    let btnY = by + boxH * 0.42;
+    let btnH = max(50, height * 0.06);
     let continueX = width / 2 - btnW - 20;
     let endX = width / 2 + 20;
     
